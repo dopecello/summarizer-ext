@@ -1,46 +1,39 @@
 const express = require('express');
-const axios = require('axios');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const dotenv = require('dotenv');
-
-dotenv.config();
+require('dotenv').config();
+const { Configuration, OpenAIApi } = require('openai');
 
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.json());
 
-const openaiApiKey = process.env.OPENAI_API_KEY;
-const openaiApiUrl = 'https://api.openai.com/v1/engines/davinci-codex/completions';
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 
 app.post('/summarize', async (req, res) => {
   try {
-    const { text, maxLength } = req.body;
-
-    const response = await axios.post(
-      openaiApiUrl,
-      {
-        prompt: `summarize the following text in ${maxLength} words: ${text}`,
-        max_tokens: maxLength * 2,
-        n: 1,
-        stop: null,
-        temperature: 0.5,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiApiKey}`,
-        },
-      }
-    );
-
-    const summary = response.data.choices[0].text.trim();
-    res.json({ summary });
-
+    const response = await openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: 'Say something nice to me.' }],
+      max_tokens: 64,
+      temperature: 0.6,
+    });
+    return res.status(200).json({
+      success: true,
+      data: response.data
+    });
   } catch (error) {
-    console.error('Error in OpenAI API request:', error);
-    res.status(500).json({ error: 'Error in API request' });
+    return res.status(400).json({
+      success: false,
+      error: error.response
+      ? error.response.data
+      : "There was an issue on the server"
+    })
   }
 });
 
