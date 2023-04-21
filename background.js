@@ -13,9 +13,9 @@ async function fetchSummary(text, maxLength) {
 
   const data = await response.json();
   return data.summary;
-}
+} // this function will be called from the content script
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => { 
   if (request.type === 'FETCH_SUMMARY') {
     fetchSummary(request.text, request.maxLength)
       .then((summary) => {
@@ -29,4 +29,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Indicate that the response will be sent asynchronously
     return true;
   }
-});
+}); //this function does the actual fetching of the summary
